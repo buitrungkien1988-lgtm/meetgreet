@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meet & Greet: 10 Personalities - V2.6 (GenZ Edition)</title>
+    <style>
+        /* ================= SCOPED CSS (Prefix: mg-) ================= */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
+
+        :root {
+            --mg-primary: #6366F1; /* Trẻ trung hơn */
+            --mg-primary-hover: #4F46E5;
+            --mg-bg: #F8FAFC;
+            --mg-card: #FFFFFF;
+            --mg-text: #0F172A;
+            --mg-text-light: #64748B;
+            --mg-success: #10B981;
+            --mg-warning: #F59E0B;
+            --mg-danger: #F43F5E;
+            --mg-chat-user: #E0E7FF;
+            --mg-chat-ai: #F1F5F9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+        body { background-color: var(--mg-bg); color: var(--mg-text); }
+
+        .mg-app { max-width: 800px; margin: 0 auto; min-height: 100vh; background: var(--mg-card); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; position: relative; overflow-x: hidden;}
+        
+        /* Screens */
+        .mg-screen { display: none; flex-direction: column; height: 100vh; padding: 20px; animation: mgFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); overflow-y: auto;}
+        .mg-screen.active { display: flex; }
+
+        @keyframes mgFadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Typography & Headers */
+        h1, h2, h3 { text-align: center; color: var(--mg-primary); margin-bottom: 10px; font-weight: 900; letter-spacing: -0.5px;}
+        .mg-header { text-align: center; padding-bottom: 20px; border-bottom: 2px dashed #E2E8F0; margin-bottom: 20px; }
+        .mg-welcome-text { text-align: center; color: var(--mg-text-light); line-height: 1.6; margin-bottom: 25px; font-size: 1.05rem;}
+        
+        /* Inputs & Buttons - GenZ Style Bouncy */
+        .mg-input-group { margin-bottom: 15px; }
+        .mg-input-group label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 0.9rem; color: #334155;}
+        .mg-input { width: 100%; padding: 14px; border: 2px solid #E2E8F0; border-radius: 12px; font-size: 1rem; transition: all 0.3s; background: #F8FAFC;}
+        .mg-input:focus { border-color: var(--mg-primary); outline: none; background: #FFFFFF; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);}
+        
+        .mg-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 900; cursor: pointer; transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .mg-btn:active { transform: scale(0.95); }
+        .mg-btn-primary { background: linear-gradient(135deg, var(--mg-primary) 0%, #818CF8 100%); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);}
+        .mg-btn-primary:hover { box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
+        .mg-btn-success { background: linear-gradient(135deg, var(--mg-success) 0%, #34D399 100%); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);}
+        .mg-btn-success:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+
+        /* Character Grid & Avatars */
+        .mg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .mg-char-card { background: white; border: 2px solid #F1F5F9; border-radius: 16px; padding: 20px 15px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);}
+        .mg-char-card:hover { border-color: var(--mg-primary); transform: translateY(-8px); box-shadow: 0 15px 25px -5px rgba(99, 102, 241, 0.15); }
+        .mg-char-avatar { width: 85px; height: 85px; border-radius: 50%; background: #EEF2FF; margin: 0 auto 12px auto; overflow: hidden; border: 4px solid #E2E8F0; transition: transform 0.3s;}
+        .mg-char-card:hover .mg-char-avatar { transform: scale(1.05) rotate(5deg); border-color: #818CF8;}
+        .mg-char-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .mg-char-name { font-weight: 900; font-size: 1.15rem; color: #1E293B;}
+        .mg-char-tag { font-size: 0.8rem; color: var(--mg-text-light); font-weight: 600;}
+
+        /* Modal Bio */
+        .mg-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px);}
+        .mg-modal-overlay.active { display: flex; }
+        .mg-modal { background: white; padding: 30px 25px; border-radius: 24px; width: 100%; max-width: 420px; text-align: center; position: relative; animation: mgPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
+        @keyframes mgPopIn { from { transform: scale(0.85) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .mg-modal-close { position: absolute; top: 12px; right: 18px; font-size: 1.5rem; cursor: pointer; color: #94A3B8; transition: color 0.2s;}
+        .mg-modal-close:hover { color: var(--mg-danger); }
+        .mg-bio-item { margin: 12px 0; padding: 12px; background: #F8FAFC; border-radius: 12px; text-align: left; border: 1px solid #E2E8F0;}
+        .mg-bio-label { font-weight: 900; color: var(--mg-primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        /* Chat Room */
+        .mg-chat-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 2px solid #F1F5F9;}
+        .mg-chat-header-avatar { width: 55px; height: 55px; border-radius: 50%; border: 3px solid var(--mg-primary); background: #E0E7FF;}
+        
+        /* RPG Elements: Intimacy Bar & Quest Log */
+        .mg-rpg-panel { background: linear-gradient(to right, #FFFBEB, #FEF3C7); padding: 15px; border-radius: 16px; border: 1px solid #FDE68A; margin-bottom: 10px; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.1);}
+        .mg-intimacy-header { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: #B45309; margin-bottom: 8px; }
+        .mg-intimacy-track { height: 12px; background: #FDE68A; border-radius: 6px; overflow: hidden; margin-bottom: 12px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);}
+        .mg-intimacy-fill { height: 100%; background: linear-gradient(90deg, #F59E0B, #D97706); width: 0%; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 6px;}
+        .mg-stage-badge { font-size: 0.75rem; background: #D97706; color: white; padding: 3px 8px; border-radius: 12px; margin-left: 5px; font-weight: 900; text-transform: uppercase;}
+        
+        .mg-secrets-log { display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;}
+        .mg-secret-badge { width: 32px; height: 32px; border-radius: 50%; background: #E2E8F0; color: #94A3B8; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: 900; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .mg-secret-badge.unlocked { background: var(--mg-success); color: white; transform: scale(1.2) rotate(360deg); box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); }
+        .mg-secret-badge.final { border-radius: 8px; }
+        .mg-secret-badge.final.unlocked { background: var(--mg-primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.6); }
+
+        /* Quest Details List */
+        .mg-quest-details { font-size: 0.85rem; }
+        .mg-quest-details summary { font-weight: 900; color: #92400E; cursor: pointer; outline: none; margin-bottom: 10px; padding: 8px; background: #FDE68A; border-radius: 8px; user-select: none; transition: background 0.2s;}
+        .mg-quest-details summary:hover { background: #FCD34D; }
+        .mg-quest-grid { display: flex; flex-direction: column; gap: 8px; }
+        .mg-quest-item { background: rgba(255,255,255,0.6); padding: 10px 12px; border-radius: 10px; border-left: 4px solid #FBBF24; color: #78350F; transition: all 0.3s; font-weight: 700; display: flex; justify-content: space-between; align-items: center;}
+        .mg-quest-item .mg-threshold { font-size: 0.7rem; color: #B45309; opacity: 0.9; background: #FEF3C7; padding: 2px 6px; border-radius: 6px;}
+        .mg-quest-item.completed { background: #D1FAE5; border-left-color: #10B981; color: #065F46; text-decoration: line-through; opacity: 0.8; }
+        .mg-quest-item.completed .mg-threshold { display: none; }
+
+        .mg-chat-box { flex-grow: 1; overflow-y: auto; padding: 15px 0; display: flex; flex-direction: column; gap: 15px; position: relative;}
+        .mg-bubble { max-width: 82%; padding: 14px 18px; border-radius: 20px; font-size: 1.05rem; line-height: 1.4; position: relative; animation: mgFadeIn 0.3s ease-out; font-weight: 600;}
+        .mg-bubble-ai { background: var(--mg-chat-ai); align-self: flex-start; border-bottom-left-radius: 4px; color: #1E293B; border: 1px solid #E2E8F0;}
+        .mg-bubble-user { background: var(--mg-primary); align-self: flex-end; border-bottom-right-radius: 4px; color: white; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);}
+        .mg-bubble-system { font-size: 0.85rem; color: #B45309; text-align: center; align-self: center; background: #FEF3C7; padding: 8px 16px; border-radius: 20px; max-width: 90%; font-weight: 800; border: 1px dashed #FCD34D;}
+        
+        /* Floating Emojis (Dopamine effect) */
+        .mg-floating-emoji { position: absolute; font-size: 1.8rem; pointer-events: none; z-index: 10; animation: mgFloatUp 1.2s ease-out forwards; bottom: 80px;}
+        @keyframes mgFloatUp { 0% { transform: translateY(0) scale(0.5) rotate(-10deg); opacity: 0; } 20% { transform: translateY(-20px) scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: translateY(-100px) scale(1) rotate(0deg); opacity: 0; } }
+
+        /* Chat Controls */
+        .mg-chat-controls { display: flex; flex-direction: column; gap: 12px; padding-top: 15px; border-top: 2px solid #F1F5F9; background: var(--mg-card); z-index: 20;}
+        .mg-chat-input-wrapper { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .mg-icon-btn { border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 1.4rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); color: white; flex-shrink: 0;}
+        .mg-icon-btn:active { transform: scale(0.9); }
+        .mg-mic-toggle { background: var(--mg-primary); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+        .mg-mic-toggle.listening { background: var(--mg-danger); animation: mgPulse 1.5s infinite; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);}
+        .mg-send-btn { background: var(--mg-success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        
+        .mg-chat-input-field { flex-grow: 1; padding: 14px 18px; border: 2px solid #E2E8F0; border-radius: 25px; font-size: 1.05rem; font-weight: 600; outline: none; transition: all 0.3s; background: #F8FAFC;}
+        .mg-chat-input-field:focus { border-color: var(--mg-primary); background: #FFFFFF; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.1);}
+
+        @keyframes mgPulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        
+        /* Typing Indicator */
+        .mg-typing { display: none; align-self: flex-start; background: var(--mg-chat-ai); padding: 14px 18px; border-radius: 20px; border-bottom-left-radius: 4px; border: 1px solid #E2E8F0;}
+        .mg-typing span { display: inline-block; width: 8px; height: 8px; background-color: #94A3B8; border-radius: 50%; margin: 0 2px; animation: mgBounce 1.4s infinite ease-in-out both; }
+        .mg-typing span:nth-child(1) { animation-delay: -0.32s; }
+        .mg-typing span:nth-child(2) { animation-delay: -0.16s; }
+
+        /* Report Screen */
+        .mg-report-box { background: linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%); padding: 25px; border-radius: 20px; margin-bottom: 20px; text-align: left; border: 2px solid #E0E7FF;}
+        .mg-mt-3 { margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="mg-app">
+    
+    <!-- SCREEN 1: WELCOME & MIC REQUEST -->
+    <div id="mg-screen-welcome" class="mg-screen active">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 5rem; margin-bottom: 15px; animation: mgBounce 2s infinite;">👋</div>
+            <h1>Meet & Greet V2.6</h1>
+            <h3 style="color: var(--mg-text-light); margin-bottom: 20px; letter-spacing: 2px;">THE SECRET HUNTER</h3>
+            
+            <p class="mg-welcome-text">
+                Mỗi nhân vật AI đang cất giữ <b>5 bí mật</b> cực xịn.<br><br>
+                <b>Luật chơi:</b> Trò chuyện tự nhiên, nếu AI hỏi, bạn <b>bắt buộc</b> phải trả lời trước khi chuyển chủ đề. Giao tiếp tinh tế để thăng cấp Thân Mật, mở khóa bí mật và trở thành "Bậc thầy ngoại giao"! 🕶️
+            </p>
+
+            <div style="background: #FFFBEB; color: #B45309; padding: 15px; border-radius: 12px; font-size: 0.95rem; margin-bottom: 25px; text-align: left; font-weight: 600; border-left: 4px solid #F59E0B;">
+                💡 <b>Mẹo dùng Mic:</b> Bấm "🎙️" một lần, nói thật thoải mái, chữ sẽ tự động nối đuôi nhau. Xong xuôi thì bấm "➤" để chốt đơn gửi đi nhé!
+            </div>
+
+            <button class="mg-btn mg-btn-primary" id="mg-btn-grant-mic">🎙️ Cấp Quyền Mic & Let's Go!</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: STUDENT INFO (CACHED) -->
+    <div id="mg-screen-setup" class="mg-screen">
+        <div class="mg-header">
+            <h2>Hồ Sơ Đặc Vụ 🕵️‍♂️</h2>
+            <p>Khai báo danh tính một lần duy nhất để lưu chiến tích.</p>
+        </div>
+        
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="mg-input-group">
+                <label>Họ và Tên Tác Chiến:</label>
+                <input type="text" id="mg-student-name" class="mg-input" placeholder="VD: Bùi Trung Kiên">
+            </div>
+            <div class="mg-input-group">
+                <label>Mã Đặc Vụ (Mã SV):</label>
+                <input type="text" id="mg-student-id" class="mg-input" placeholder="VD: 686868">
+            </div>
+            <div class="mg-input-group">
+                <label>Căn Cứ (Lớp học):</label>
+                <input type="text" id="mg-student-class" class="mg-input" placeholder="VD: K68EngA">
+            </div>
+        </div>
+
+        <button class="mg-btn mg-btn-primary" id="mg-btn-save-info">Lưu Hồ Sơ & Tiếp Tục 🚀</button>
+    </div>
+
+    <!-- SCREEN 3: CHARACTER SELECTION -->
+    <div id="mg-screen-select" class="mg-screen">
+        <div class="mg-header">
+            <h2>Sảnh Chờ Nhân Vật 🛸</h2>
+            <p>Chọn 1 mục tiêu để khai thác 5 bí mật!</p>
+        </div>
+        <div id="mg-character-grid" class="mg-grid">
+            <!-- Rendered via JS -->
+        </div>
+    </div>
+
+    <!-- BIO MODAL -->
+    <div id="mg-modal-bio" class="mg-modal-overlay">
+        <div class="mg-modal">
+            <div class="mg-modal-close" id="mg-close-modal">✖</div>
+            <div id="mg-modal-avatar" class="mg-char-avatar" style="width: 100px; height: 100px; margin: 0 auto 15px auto;">
+                <img id="mg-modal-img" src="" alt="Avatar">
+            </div>
+            <h2 id="mg-modal-name" style="margin-bottom: 5px;"></h2>
+            <p id="mg-modal-tag" style="color: var(--mg-text-light); margin-bottom: 15px; font-weight: 800; text-transform: uppercase;"></p>
+            
+            <div class="mg-bio-item">
+                <div class="mg-bio-label">🎯 DNA (Sở thích)</div>
+                <div id="mg-modal-interests" style="font-weight: 600; margin-top: 5px;"></div>
+            </div>
+            <div class="mg-bio-item">
+                <div class="mg-bio-label">🗣️ Vibe Giao Tiếp</div>
+                <div id="mg-modal-style" style="font-weight: 600; margin-top: 5px;"></div>
+            </div>
+            
+            <p style="font-size: 0.9rem; color: var(--mg-danger); margin: 15px 0; font-weight: 800; background: #FFE4E6; padding: 12px; border-radius: 12px;">
+                Nhiệm vụ: Nhân vật có 5 bí mật động trời. Hỏi khéo léo để tăng Thân Mật, mở khóa toàn bộ Sổ Tay Nhiệm Vụ!
+            </p>
+
+            <button class="mg-btn mg-btn-success" id="mg-btn-begin-chat">Go! Kết Nối Ngay ⚡</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: CHAT ROOM -->
+    <div id="mg-screen-chat" class="mg-screen">
+        <!-- Header -->
+        <div class="mg-chat-header">
+            <img id="mg-chat-avatar-img" class="mg-chat-header-avatar" src="" alt="">
+            <div>
+                <h3 id="mg-chat-name" style="margin: 0; text-align: left; font-size: 1.3rem;"></h3>
+                <span style="font-size: 0.85rem; color: var(--mg-success); font-weight: 800;">● Online</span>
+            </div>
+        </div>
+
+        <!-- RPG Panel with Quest Log -->
+        <div class="mg-rpg-panel">
+            <div class="mg-intimacy-header">
+                <span>Trạng Thái <span id="mg-stage-badge" class="mg-stage-badge">Làm quen</span></span>
+                <span id="mg-intimacy-score" style="font-size: 1rem;">0/200</span>
+            </div>
+            <div class="mg-intimacy-track">
+                <div class="mg-intimacy-fill" id="mg-intimacy-fill"></div>
+            </div>
+            <div class="mg-secrets-log" id="mg-secrets-log">
+                <div class="mg-secret-badge">1</div><div class="mg-secret-badge">2</div>
+                <div class="mg-secret-badge">3</div><div class="mg-secret-badge">4</div>
+                <div class="mg-secret-badge final">5</div>
+            </div>
+            <details class="mg-quest-details" open>
+                <summary>📜 Mật Thư: 5 Bí Mật Cần Khai Thác Của <span id="mg-quest-char-name"></span></summary>
+                <div class="mg-quest-grid" id="mg-quest-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </details>
+        </div>
+
+        <!-- Floating Emoji Container (Invisible, for positioning) -->
+        <div id="mg-chat-history" class="mg-chat-box">
+            <!-- Chat Bubbles -->
+        </div>
+        
+        <div class="mg-typing" id="mg-typing-indicator">
+            <span></span><span></span><span></span>
+        </div>
+
+        <div class="mg-chat-controls">
+            <!-- Input Area with Mic & Send -->
+            <div class="mg-chat-input-wrapper">
+                <button class="mg-icon-btn mg-mic-toggle" id="mg-btn-mic" title="Bấm 1 lần để thu âm">🎤</button>
+                <input type="text" id="mg-chat-input" class="mg-chat-input-field" placeholder="Nhập hoặc đọc câu hỏi...">
+                <button class="mg-icon-btn mg-send-btn" id="mg-btn-send" title="Chốt đơn">➤</button>
+            </div>
+            <button class="mg-btn" style="background: #F1F5F9; color: var(--mg-text); padding: 12px; font-size: 1rem;" id="mg-btn-end-chat">Thoát & Báo Cáo Thành Tích 🛑</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 5: REPORT -->
+    <div id="mg-screen-report" class="mg-screen">
+        <div class="mg-header">
+            <h2>🏆 Chiến Tích Hôm Nay</h2>
+            <p>Cuộc săn tìm bí mật đã khép lại!</p>
+        </div>
+
+        <div class="mg-report-box" style="flex-grow: 1; overflow-y: auto;">
+            <p style="margin-bottom: 8px;"><strong>🧑‍🎓 Đặc vụ:</strong> <span id="mg-rep-student" style="font-weight: 800;"></span></p>
+            <p style="margin-bottom: 8px;"><strong>💬 Đối tượng:</strong> <span id="mg-rep-char" style="font-weight: 800; color: var(--mg-primary);"></span></p>
+            <p style="margin-bottom: 8px;"><strong>🔥 Nhiệm vụ pass:</strong> <span id="mg-rep-score" style="color: var(--mg-danger); font-weight: 900; font-size: 1.3rem;"></span></p>
+            <hr style="margin: 15px 0; border: 1px dashed #CBD5E1;">
+            <p style="color: var(--mg-primary); font-weight: 900; margin-bottom: 8px; text-transform: uppercase;">🤖 AI Tổng Kết:</p>
+            <p id="mg-rep-feedback" style="font-style: italic; line-height: 1.6; font-weight: 600; color: #334155;"></p>
+        </div>
+
+        <div style="padding-top: 10px;">
+            <button class="mg-btn mg-btn-success" id="mg-btn-submit-form" style="padding: 18px;">📤 Nộp Lên Hệ Thống Ngay!</button>
+            <button class="mg-btn mg-mt-3" style="background: #F1F5F9; color: var(--mg-text);" id="mg-btn-play-again">🔄 Chọn đối tượng khác</button>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { GoogleGenerativeAI } from 'https://esm.sh/@google/generative-ai';
+
+    // ================= STATE & DATA =================
+    const finalApiKey = ""; // Tự động nhận qua Canvas Environment
+    const MAX_INTIMACY = 200;
+    
+    let studentData = { name: "", id: "", class: "" };
+    let activeCharacter = null;
+    let intimacyScore = 0;
+    let unlockedStatus = [false, false, false, false, false];
+    let fullTranscript = "";
+    let chatSession = null;
+    let isRecording = false;
+    let aiFeedbackText = "";
+
+    // Web Speech API (Continuous Mode)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = true; 
+        recognition.interimResults = false;
+    }
+
+    // Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        if (type === 'ting') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        } else if (type === 'unlock') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.8);
+        } else if (type === 'pop') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+    }
+
+    // AI TTS
+    function speakText(text, genderPref) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.05; 
+        utterance.pitch = 1.15; 
+
+        const voices = window.speechSynthesis.getVoices();
+        let selectedVoice = null;
+        
+        if (voices.length > 0) {
+            const englishVoices = voices.filter(v => v.lang.includes('en'));
+            if (genderPref === 'female') {
+                selectedVoice = englishVoices.find(v => v.name.includes('Google') && v.name.includes('Female')) ||
+                                englishVoices.find(v => v.name.includes('Zira')) ||
+                                englishVoices.find(v => v.name.includes('Samantha'));
+            } else {
+                selectedVoice = englishVoices.find(v => v.name.includes('Google') && v.name.includes('Male')) ||
+                                englishVoices.find(v => v.name.includes('Mark')) ||
+                                englishVoices.find(v => v.name.includes('David'));
+            }
+            if(!selectedVoice && englishVoices.length > 0) selectedVoice = englishVoices[0];
+            if (selectedVoice) utterance.voice = selectedVoice;
+        }
+        window.speechSynthesis.speak(utterance);
+    }
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+
+    // ================= 10 CHARACTERS DATABASE =================
+    const basePrompt = "Speak in conversational B2 English. Keep answers short (1-2 sentences). You are talking to a student.";
+    
+    const characters = [
+        {
+            id: "char_1", name: "Alex", gender: "male", tag: "Nhạc Rock & Phượt",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4",
+            interests: "Thích nghe nhạc Rock cổ điển, chơi guitar điện và đi du lịch bụi.",
+            style: "Hào hứng, năng động, hay dùng từ lóng (slang).",
+            keywords: ["rock", "music", "guitar", "travel", "trip", "country"],
+            prompt: `You are Alex, an energetic backpacker who loves classic rock and playing guitar. ${basePrompt}`,
+            quests: [
+                { topic: "Món ăn đường phố từng bị ngộ độc", secret: "I once got severe food poisoning from eating street food in Thailand.", threshold: 30 },
+                { topic: "Kỷ niệm du lịch tồi tệ nhất", secret: "I got completely lost in a forest during a storm and lost my map.", threshold: 70 },
+                { topic: "Thói quen kỳ lạ ở nhà nghỉ", secret: "I always sleep with my socks on because hostel beds creep me out.", threshold: 120 },
+                { topic: "Món đồ quý giá bị mất trên đường", secret: "I lost my lucky guitar pick that I had since I was 10.", threshold: 160 },
+                { topic: "Ban nhạc Rock tôn thờ nhất", secret: "I crazily admire Queen and Freddie Mercury. What is your favorite band?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_2", name: "Sarah", gender: "female", tag: "Làm bánh & Yêu mèo",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Princess&backgroundColor=ffdfbf",
+            interests: "Đam mê làm bánh ngọt. Rất yêu động vật, đặc biệt là mèo.",
+            style: "Nhẹ nhàng, mô tả chi tiết, dễ thương.",
+            keywords: ["bake", "cake", "sweet", "cat", "pet", "kitchen"],
+            prompt: `You are Sarah, a gentle person who loves baking cakes and taking care of cats. ${basePrompt}`,
+            quests: [
+                { topic: "Tai nạn làm bánh đáng xấu hổ", secret: "I once accidentally put salt instead of sugar in a wedding cake.", threshold: 30 },
+                { topic: "Loài động vật sợ nhất", secret: "Even though I love cats, I am absolutely terrified of small frogs.", threshold: 70 },
+                { topic: "Trò đùa tai hại của mèo cưng", secret: "My cat once pushed my laptop off the table while I was streaming.", threshold: 120 },
+                { topic: "Bí kíp gia truyền bị mất", secret: "I lost my grandmother's handwritten recipe book when moving houses.", threshold: 160 },
+                { topic: "Đầu bếp thần tượng", secret: "I deeply admire Gordon Ramsay, even though he yells a lot. Do you like cooking?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_3", name: "Marcus", gender: "male", tag: "Bóng rổ & Gym",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Jack&backgroundColor=c0aede",
+            interests: "Cầu thủ bóng rổ nghiệp dư, thích tập gym và ăn uống healthy.",
+            style: "Mạnh mẽ, dứt khoát, thường nói về kỷ luật.",
+            keywords: ["basketball", "sport", "gym", "workout", "health", "play"],
+            prompt: `You are Marcus, an athletic guy who plays basketball and loves the gym. ${basePrompt}`,
+            quests: [
+                { topic: "Món ăn vặt lén lút (Guilty pleasure)", secret: "I strictly diet, but I secretly eat a whole pint of strawberry ice cream on Sundays.", threshold: 30 },
+                { topic: "Chấn thương ngớ ngẩn nhất", secret: "I broke my finger trying to catch a heavy dictionary, not a basketball.", threshold: 70 },
+                { topic: "Nỗi sợ hãi kỳ lạ với thể hình to lớn", secret: "Despite being 190cm tall, I am ridiculously scared of heights.", threshold: 120 },
+                { topic: "Món đồ thể thao đánh mất", secret: "I lost the very first basketball my dad gave me.", threshold: 160 },
+                { topic: "Huyền thoại thể thao ngưỡng mộ", secret: "LeBron James is my ultimate idol. What sport do you play?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_4", name: "Luna", gender: "female", tag: "Thiên văn & Không gian",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=d1d4f9",
+            interests: "Ngắm sao, vật lý thiên văn và nghiên cứu vũ trụ.",
+            style: "Điềm đạm, dùng nhiều từ vựng học thuật khoa học.",
+            keywords: ["star", "space", "universe", "astronomy", "science", "planet"],
+            prompt: `You are Luna, a logical person fascinated by astronomy and the universe. ${basePrompt}`,
+            quests: [
+                { topic: "Thói quen kỳ lạ khi ngắm sao", secret: "I always listen to classical violin music when observing the night sky.", threshold: 30 },
+                { topic: "Sự cố trong phòng thí nghiệm", secret: "I once accidentally set a science textbook on fire during a chemistry experiment.", threshold: 70 },
+                { topic: "Nỗi sợ hãi đối nghịch với đam mê", secret: "I love the vast universe, but I am terrified of the deep ocean.", threshold: 120 },
+                { topic: "Món đồ thiên văn bị đánh mất", secret: "I lost my favorite glowing star map poster when I moved to a new city.", threshold: 160 },
+                { topic: "Câu hỏi triết lý về vũ trụ", secret: "I dream of living on Mars. Do you think we are alone in the universe?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_5", name: "Chef Ben", gender: "male", tag: "Ẩm thực & Nông trại",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Bandit&backgroundColor=ffd5dc",
+            interests: "Đầu bếp nhà hàng, thích tự trồng rau sạch.",
+            style: "Đam mê, nhiệt huyết khi nhắc đến đồ ăn.",
+            keywords: ["cook", "chef", "food", "vegetable", "farm", "dish"],
+            prompt: `You are Chef Ben, a passionate restaurant chef who loves organic farming. ${basePrompt}`,
+            quests: [
+                { topic: "Món ăn ghét nhất dù là đầu bếp", secret: "I am a professional chef, but I absolutely despise eating raw tomatoes.", threshold: 30 },
+                { topic: "Tai nạn buồn cười khi làm vườn", secret: "I was chased by a very aggressive angry goose in my own farm.", threshold: 70 },
+                { topic: "Thói quen ám ảnh nghề nghiệp", secret: "I unconsciously smell all my ingredients three times before using them.", threshold: 120 },
+                { topic: "Bảo vật nhà bếp bị mất", secret: "I lost a vintage silver spoon that was a family heirloom.", threshold: 160 },
+                { topic: "Hương vị tuổi thơ", secret: "I am a huge fan of Jamie Oliver. By the way, what food reminds you of your childhood?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_6", name: "Mia", gender: "female", tag: "Vẽ tranh & Nghệ thuật",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Mia&backgroundColor=b6e3f4",
+            interests: "Họa sĩ tự do, đi bảo tàng và pha trộn màu sắc.",
+            style: "Bay bổng, cảm xúc, thích hỏi cảm nhận của người khác.",
+            keywords: ["art", "draw", "paint", "color", "museum", "picture"],
+            prompt: `You are Mia, a free-spirited artist who loves painting and visiting museums. ${basePrompt}`,
+            quests: [
+                { topic: "Thức uống kích thích sáng tạo", secret: "I am totally addicted to drinking iced matcha lattes while painting.", threshold: 30 },
+                { topic: "Tai nạn nghề nghiệp đáng xấu hổ", secret: "I once spilled bright blue paint all over a stranger's white coat.", threshold: 70 },
+                { topic: "Cách xả stress kỳ lạ", secret: "When I get frustrated, I throw away my brushes and paint with my bare fingers.", threshold: 120 },
+                { topic: "Bức tranh tâm huyết bị mất", secret: "I lost my very first watercolor landscape painting when I was 8.", threshold: 160 },
+                { topic: "Góc nhìn nghệ thuật", secret: "I am obsessed with Vincent van Gogh. Tell me, if your life was a painting, what color would it be?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_7", name: "Tom", gender: "male", tag: "Game thủ & Công nghệ",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Buster&backgroundColor=ffdfbf",
+            interests: "Streamer game, lắp ráp máy tính.",
+            style: "Nói nhanh, dùng nhiều từ vựng công nghệ.",
+            keywords: ["game", "play", "computer", "tech", "stream", "software"],
+            prompt: `You are Tom, a fast-talking gamer and tech enthusiast. ${basePrompt}`,
+            quests: [
+                { topic: "Tai nạn quên tắt mic trên Stream", secret: "I once accidentally streamed myself sleeping and snoring to thousands of viewers.", threshold: 30 },
+                { topic: "Chế độ ăn uống tồi tệ", secret: "I survive entirely on energy drinks and cold leftover pizza.", threshold: 70 },
+                { topic: "Nỗi ám ảnh kinh hoàng nhất", secret: "As a streamer, I have a severe phobia of sudden power outages.", threshold: 120 },
+                { topic: "Cỗ máy tuổi thơ bị mất", secret: "I left my very first original Gameboy on a public bus.", threshold: 160 },
+                { topic: "Thế giới ảo lý tưởng", secret: "I admire the legendary gamer Faker. If you could live inside a video game, which one would it be?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_8", name: "Dr. Hana", gender: "female", tag: "Y học & Leo núi",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Jocelyn&backgroundColor=c0aede",
+            interests: "Bác sĩ thực tập, thư giãn bằng cách đi leo núi.",
+            style: "Chuyên nghiệp, ân cần, đáng tin cậy.",
+            keywords: ["doctor", "medicine", "hospital", "hike", "mountain", "health"],
+            prompt: `You are Dr. Hana, a caring medical intern who loves hiking. ${basePrompt}`,
+            quests: [
+                { topic: "Sự cố ngất xỉu trong ca trực", secret: "I actually fainted during my very first surgery observation due to exhaustion.", threshold: 30 },
+                { topic: "Món ăn xả stress kỳ lạ", secret: "I secretly love eating extremely sour lemons after a long hospital shift.", threshold: 70 },
+                { topic: "Nỗi sợ hãi mỉa mai của một bác sĩ", secret: "It's ironic, but I am terrified of getting injections myself.", threshold: 120 },
+                { topic: "Món đồ nghề đánh mất", secret: "I lost my lucky engraved stethoscope at a coffee shop.", threshold: 160 },
+                { topic: "Sự đánh đổi trong cuộc sống", secret: "I want to build a free hospital in a remote village. Which is more important to you: wealth or health?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_9", name: "Leo", gender: "male", tag: "Nhiếp ảnh & Khám phá",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=d1d4f9",
+            interests: "Chụp ảnh đường phố, tìm hiểu lịch sử thành phố.",
+            style: "Quan sát tinh tế, hay mô tả về ánh sáng.",
+            keywords: ["photo", "camera", "picture", "street", "city", "history"],
+            prompt: `You are Leo, an observant street photographer. ${basePrompt}`,
+            quests: [
+                { topic: "Rắc rối với cảnh sát", secret: "I was once questioned by the police because I was taking photos of an abandoned bank at 2 AM.", threshold: 30 },
+                { topic: "Tai nạn phá hỏng đồ nghề", secret: "I accidentally dropped a very expensive camera lens into a river.", threshold: 70 },
+                { topic: "Nỗi sợ không gian kiến trúc", secret: "Despite exploring cities, I am highly claustrophobic and hate narrow elevators.", threshold: 120 },
+                { topic: "Bức ảnh đầu tiên bị mất", secret: "I lost my first Polaroid camera and the family photo inside it on a train.", threshold: 160 },
+                { topic: "Khoảnh khắc vô giá", secret: "I collect old postal stamps. Tell me, what is a moment in your life you wish you could capture forever?", threshold: 200 }
+            ]
+        },
+        {
+            id: "char_10", name: "Nina", gender: "female", tag: "Làm vườn & Yoga",
+            avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Nala&backgroundColor=ffd5dc",
+            interests: "Trồng cây trong nhà, tập Yoga và thiền định.",
+            style: "Chậm rãi, từ tốn, dùng từ ngữ bình yên.",
+            keywords: ["plant", "garden", "tree", "yoga", "meditate", "peace"],
+            prompt: `You are Nina, a peaceful person who loves indoor gardening and yoga. ${basePrompt}`,
+            quests: [
+                { topic: "Sự cố xấu hổ khi thiền", secret: "I once fell deeply asleep and snored loudly during a quiet group meditation class.", threshold: 30 },
+                { topic: "Món ăn thanh đạm khoái khẩu", secret: "My absolute favorite meal is a fresh, spicy Thai mango salad.", threshold: 70 },
+                { topic: "Điều gây ám ảnh tâm lý", secret: "I am overly terrified of sudden, loud noises like fireworks or sirens.", threshold: 120 },
+                { topic: "Vật phẩm tâm linh bị mất", secret: "I lost my favorite lucky crystal stone when I was traveling in India.", threshold: 160 },
+                { topic: "Trạng thái bình yên", secret: "I want to live in a treehouse. How do you find peace in such a noisy world?", threshold: 200 }
+            ]
+        }
+    ];
+
+    // ================= DOM ELEMENTS =================
+    const screens = {
+        welcome: document.getElementById('mg-screen-welcome'),
+        setup: document.getElementById('mg-screen-setup'),
+        select: document.getElementById('mg-screen-select'),
+        chat: document.getElementById('mg-screen-chat'),
+        report: document.getElementById('mg-screen-report')
+    };
+
+    const els = {
+        name: document.getElementById('mg-student-name'),
+        id: document.getElementById('mg-student-id'),
+        class: document.getElementById('mg-student-class'),
+        charGrid: document.getElementById('mg-character-grid'),
+        
+        modal: document.getElementById('mg-modal-bio'),
+        modImg: document.getElementById('mg-modal-img'),
+        modName: document.getElementById('mg-modal-name'),
+        modTag: document.getElementById('mg-modal-tag'),
+        modInterests: document.getElementById('mg-modal-interests'),
+        modStyle: document.getElementById('mg-modal-style'),
+        
+        chatName: document.getElementById('mg-chat-name'),
+        chatAvatarImg: document.getElementById('mg-chat-avatar-img'),
+        chatHistory: document.getElementById('mg-chat-history'),
+        intimacyScoreText: document.getElementById('mg-intimacy-score'),
+        intimacyFill: document.getElementById('mg-intimacy-fill'),
+        stageBadge: document.getElementById('mg-stage-badge'),
+        secretsLog: document.getElementById('mg-secrets-log'),
+        questGrid: document.getElementById('mg-quest-grid'),
+        questCharName: document.getElementById('mg-quest-char-name'),
+        
+        typingInd: document.getElementById('mg-typing-indicator'),
+        btnMic: document.getElementById('mg-btn-mic'),
+        btnSend: document.getElementById('mg-btn-send'),
+        chatInput: document.getElementById('mg-chat-input')
+    };
+
+    function switchScreen(screenKey) {
+        Object.values(screens).forEach(s => s.classList.remove('active'));
+        screens[screenKey].classList.add('active');
+        playSound('pop');
+    }
+
+    // ================= FLOW CONTROLLERS =================
+    
+    document.getElementById('mg-btn-grant-mic').addEventListener('click', () => {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        if(recognition) {
+            try { recognition.start(); setTimeout(() => recognition.stop(), 500); } catch(e) {}
+        }
+        
+        if(localStorage.getItem('mg_sname') && localStorage.getItem('mg_sid')) {
+            studentData.name = localStorage.getItem('mg_sname');
+            studentData.id = localStorage.getItem('mg_sid');
+            studentData.class = localStorage.getItem('mg_sclass') || "";
+            renderCharacters();
+            switchScreen('select');
+        } else {
+            switchScreen('setup');
+        }
+    });
+
+    document.getElementById('mg-btn-save-info').addEventListener('click', () => {
+        studentData.name = els.name.value.trim();
+        studentData.id = els.id.value.trim();
+        studentData.class = els.class.value.trim();
+
+        if(!studentData.name || !studentData.id || !studentData.class) { 
+            alert("Vui lòng nhập đủ 3 thông tin để chốt hồ sơ!"); return; 
+        }
+
+        localStorage.setItem('mg_sname', studentData.name);
+        localStorage.setItem('mg_sid', studentData.id);
+        localStorage.setItem('mg_sclass', studentData.class);
+
+        renderCharacters();
+        switchScreen('select');
+    });
+
+    function renderCharacters() {
+        els.charGrid.innerHTML = '';
+        characters.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'mg-char-card';
+            card.innerHTML = `
+                <div class="mg-char-avatar"><img src="${char.avatarUrl}" alt="${char.name}"></div>
+                <div class="mg-char-name">${char.name}</div>
+                <div class="mg-char-tag">${char.tag}</div>
+            `;
+            card.addEventListener('click', () => openModal(char));
+            els.charGrid.appendChild(card);
+        });
+    }
+
+    function openModal(char) {
+        playSound('pop');
+        activeCharacter = char;
+        els.modImg.src = char.avatarUrl;
+        els.modName.textContent = char.name;
+        els.modTag.textContent = char.tag;
+        els.modInterests.textContent = char.interests;
+        els.modStyle.textContent = char.style;
+        els.modal.classList.add('active');
+    }
+
+    document.getElementById('mg-close-modal').addEventListener('click', () => {
+        els.modal.classList.remove('active');
+        playSound('pop');
+    });
+
+    document.getElementById('mg-btn-begin-chat').addEventListener('click', () => {
+        els.modal.classList.remove('active');
+        initChatRoom();
+    });
+
+    // ================= CHAT ROOM & RPG LOGIC =================
+    function initSecretsUI() {
+        els.questCharName.textContent = activeCharacter.name;
+        els.questGrid.innerHTML = activeCharacter.quests.map((q, i) => 
+            `<div class="mg-quest-item" id="q-item-${i}">
+                <span>Nhiệm vụ ${i+1}: ${q.topic}</span>
+                <span class="mg-threshold">Cần ${q.threshold} đ</span>
+            </div>`
+        ).join('');
+        
+        const badges = els.secretsLog.children;
+        for(let i=0; i<5; i++) {
+            badges[i].classList.remove('unlocked');
+        }
+    }
+
+    async function initChatRoom() {
+        switchScreen('chat');
+        els.chatName.textContent = activeCharacter.name;
+        els.chatAvatarImg.src = activeCharacter.avatarUrl;
+        els.chatHistory.innerHTML = '';
+        els.chatInput.value = '';
+        
+        intimacyScore = 0;
+        unlockedStatus = [false, false, false, false, false];
+        fullTranscript = "";
+        updateIntimacyUI();
+        initSecretsUI();
+
+        if(!finalApiKey) {
+            appendSystemBubble("Hệ thống đang khởi tạo môi trường AI ngầm. Bạn có thể bắt đầu giao tiếp.");
+        }
+
+        try {
+            const genAI = new GoogleGenerativeAI(finalApiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
+            chatSession = model.startChat({
+                history: [
+                    { role: "user", parts: [{ text: "Hello!" }] },
+                    { role: "model", parts: [{ text: `Hi there! I'm ${activeCharacter.name}. Nice to meet you! How is your day going?` }] }
+                ],
+            });
+            
+            const introMsg = `Hi there! I'm ${activeCharacter.name}. Nice to meet you! How is your day going?`;
+            appendBubble(introMsg, 'ai');
+            speakText(introMsg, activeCharacter.gender);
+        } catch (error) {
+            appendSystemBubble("Lỗi kết nối AI. Vui lòng kiểm tra lại môi trường Canvas.");
+        }
+    }
+
+    function getStageName(score) {
+        if (score < 40) return "Làm quen";
+        if (score < 100) return "Bạn bè";
+        if (score < 160) return "Khá thân";
+        return "Tri kỷ";
+    }
+
+    function updateIntimacyUI() {
+        if(intimacyScore > MAX_INTIMACY) intimacyScore = MAX_INTIMACY;
+        els.intimacyScoreText.textContent = intimacyScore + "/" + MAX_INTIMACY;
+        els.intimacyFill.style.width = (intimacyScore / MAX_INTIMACY * 100) + "%";
+        
+        const stage = getStageName(intimacyScore);
+        els.stageBadge.textContent = stage;
+        
+        // Color coding for stages
+        if(intimacyScore < 40) els.stageBadge.style.background = "#94A3B8"; // Gray
+        else if(intimacyScore < 100) els.stageBadge.style.background = "#3B82F6"; // Blue
+        else if(intimacyScore < 160) els.stageBadge.style.background = "#8B5CF6"; // Indigo
+        else els.stageBadge.style.background = "#F43F5E"; // Red (Max)
+    }
+
+    function spawnFloatingEmoji(emojiArray) {
+        const emoji = emojiArray[Math.floor(Math.random() * emojiArray.length)];
+        const el = document.createElement('div');
+        el.className = 'mg-floating-emoji';
+        el.textContent = emoji;
+        // Random horizontal position near center
+        el.style.left = `calc(50% + ${(Math.random() - 0.5) * 80}px)`;
+        els.chatHistory.appendChild(el);
+        setTimeout(() => el.remove(), 1200);
+    }
+
+    function appendBubble(text, sender) {
+        const div = document.createElement('div');
+        div.className = `mg-bubble mg-bubble-${sender}`;
+        div.textContent = text;
+        els.chatHistory.appendChild(div);
+        els.chatHistory.scrollTop = els.chatHistory.scrollHeight;
+    }
+    
+    function appendSystemBubble(text) {
+        const div = document.createElement('div');
+        div.className = `mg-bubble-system`;
+        div.textContent = text;
+        els.chatHistory.appendChild(div);
+        els.chatHistory.scrollTop = els.chatHistory.scrollHeight;
+    }
+
+    // --- CONTINUOUS MIC LOGIC ---
+    els.btnMic.addEventListener('click', () => {
+        if(!recognition) return;
+        if(!isRecording) {
+            recognition.start();
+            isRecording = true;
+            els.btnMic.classList.add('listening');
+            els.chatInput.placeholder = "Đang nghe... (Dừng lại chữ sẽ điền)";
+        } else {
+            recognition.stop();
+            resetMic();
+        }
+    });
+
+    if(recognition) {
+        recognition.onresult = (event) => {
+            let latestTranscript = event.results[event.results.length - 1][0].transcript;
+            let currentVal = els.chatInput.value.trim();
+            els.chatInput.value = currentVal ? currentVal + " " + latestTranscript.trim() : latestTranscript.trim();
+        };
+        recognition.onend = () => { if(isRecording) resetMic(); };
+        recognition.onerror = () => resetMic();
+    } else {
+        els.btnMic.style.display = 'none';
+        els.chatInput.placeholder = "Trình duyệt không hỗ trợ Mic. Gõ text...";
+    }
+
+    function resetMic() {
+        isRecording = false;
+        els.btnMic.classList.remove('listening');
+        els.chatInput.placeholder = "Nhập hoặc đọc câu hỏi...";
+    }
+
+    els.btnSend.addEventListener('click', () => {
+        if(isRecording && recognition) {
+            recognition.stop();
+            resetMic();
+        }
+        const text = els.chatInput.value.trim();
+        if(text) {
+            handleUserMessage(text);
+            els.chatInput.value = '';
+        }
+    });
+
+    els.chatInput.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') els.btnSend.click();
+    });
+
+    async function handleUserMessage(text) {
+        if(!chatSession) return;
+        
+        appendBubble(text, 'user');
+        fullTranscript += `User: ${text}\n`;
+        
+        let oldIntimacy = intimacyScore;
+        calculateIntimacy(text);
+        if(intimacyScore > oldIntimacy) {
+            spawnFloatingEmoji(['❤️', '🔥', '✨', '🚀', '💯']);
+        }
+
+        els.typingInd.style.display = 'flex';
+        els.chatHistory.scrollTop = els.chatHistory.scrollHeight;
+
+        let stageName = getStageName(intimacyScore);
+
+        let systemNote = `[HỆ THỐNG GỬI AI: Bạn là ${activeCharacter.name}. ${activeCharacter.prompt}
+Mức độ thân thiết hiện tại: ${stageName} (${intimacyScore}/200 điểm).
+QUY TẮC GIAO TIẾP HAI CHIỀU (BẮT BUỘC):
+1. NẾU bạn vừa hỏi người chơi ở câu trước, mà họ phớt lờ không trả lời bạn, BẮT BUỘC bạn phải nhắc lại câu hỏi đó và TỪ CHỐI trả lời câu hỏi mới của họ. (Ví dụ: "Wait, you didn't answer my question: ...").
+2. Đừng dễ dãi tiết lộ bí mật nếu họ chỉ hỏi trống không.
+3. Nếu họ trả lời tốt câu hỏi của bạn và hỏi trúng chủ đề bí mật bên dưới, hãy tiết lộ nó. Khi tiết lộ Bí mật X, BẮT BUỘC ghi [UNLOCK_X] ở cuối câu.
+Các bí mật khả dụng ở mốc điểm này:
+`;
+        
+        let hasSecrets = false;
+        activeCharacter.quests.forEach((q, i) => {
+            if(intimacyScore >= q.threshold && !unlockedStatus[i]) {
+                 systemNote += `- Bí mật ${i+1}: Chủ đề "${q.topic}". Nội dung sẽ nói: "${q.secret}" (Nhớ ghi [UNLOCK_${i+1}] ở cuối)\n`;
+                 hasSecrets = true;
+            }
+        });
+
+        if(!hasSecrets) {
+            systemNote += `(Không có bí mật nào. Hãy hỏi ngược lại người chơi để duy trì hội thoại)\n`;
+        }
+        systemNote += `]\n\nNgười chơi nói: ${text}`;
+
+        try {
+            const result = await chatSession.sendMessage(systemNote);
+            let aiResponseText = result.response.text();
+            let displayCleanText = aiResponseText;
+
+            // Check Unlocks
+            for (let i = 0; i < 5; i++) {
+                let tag = `[UNLOCK_${i+1}]`;
+                if (aiResponseText.includes(tag)) {
+                    if (!unlockedStatus[i]) {
+                        unlockedStatus[i] = true;
+                        playSound('unlock');
+                        spawnFloatingEmoji(['🌟','🌟','🌟']); // Burst of stars
+                        document.getElementById(`q-item-${i}`).classList.add('completed');
+                        els.secretsLog.children[i].classList.add('unlocked');
+                        appendSystemBubble(`✨ Mật thư giải mã thành công: ${activeCharacter.quests[i].topic}!`);
+                    }
+                    displayCleanText = displayCleanText.replace(tag, ''); 
+                }
+            }
+            
+            displayCleanText = displayCleanText.trim();
+            els.typingInd.style.display = 'none';
+            appendBubble(displayCleanText, 'ai');
+            fullTranscript += `${activeCharacter.name}: ${displayCleanText}\n\n`;
+            speakText(displayCleanText, activeCharacter.gender);
+            
+            let unlockedCount = unlockedStatus.filter(Boolean).length;
+            if(unlockedCount === 5 && !unlockedStatus.includes('celebrated')) {
+                unlockedStatus.push('celebrated'); 
+                appendSystemBubble("🏆 XUẤT SẮC! BẠN ĐÃ PHÁ ĐẢO NHÂN VẬT NÀY!");
+            }
+        } catch (error) {
+            els.typingInd.style.display = 'none';
+            appendBubble("Xin lỗi, hệ thống AI đang nghẽn. Hãy thử lại.", 'ai');
+        }
+    }
+
+    function calculateIntimacy(text) {
+        let t = text.toLowerCase();
+        let wordCount = t.split(" ").length;
+        
+        let points = 2; // base
+        if (wordCount > 5) points = 4;
+        if (wordCount > 10) points = 6;
+        
+        let hitKeyword = false;
+        activeCharacter.keywords.forEach(kw => {
+            if (t.includes(kw)) hitKeyword = true;
+        });
+        if(hitKeyword) points += 4;
+
+        intimacyScore += points;
+        updateIntimacyUI();
+        playSound('ting');
+    }
+
+    // ================= REPORT & EXACT FORM SUBMISSION =================
+    document.getElementById('mg-btn-end-chat').addEventListener('click', async () => {
+        window.speechSynthesis.cancel();
+        if(recognition && isRecording) { recognition.stop(); resetMic(); }
+        
+        switchScreen('report');
+        let unlockedCount = unlockedStatus.filter(val => val === true).length;
+        
+        document.getElementById('mg-rep-student').textContent = `${studentData.name} - ${studentData.id} (${studentData.class})`;
+        document.getElementById('mg-rep-char').textContent = activeCharacter.name;
+        document.getElementById('mg-rep-score').textContent = `${unlockedCount}/5 Nhiệm vụ (Thân mật: ${intimacyScore})`;
+        document.getElementById('mg-rep-feedback').textContent = "AI đang soi lỗi và chấm điểm... ⏳";
+
+        try {
+            const genAI = new GoogleGenerativeAI(finalApiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
+            const prompt = `
+            Đánh giá cực kỳ ngắn gọn (2 câu tiếng Việt, dùng ngôn ngữ trẻ trung năng động) đoạn hội thoại của sinh viên và ${activeCharacter.name}.
+            Transcript: ${fullTranscript}
+            Sinh viên đã mở khóa được ${unlockedCount}/5 bí mật.
+            Nhận xét: Khen ngợi nếu làm tốt, chỉ ra 1 lỗi ngữ pháp/từ vựng rõ ràng nhất để sửa.
+            `;
+            const result = await model.generateContent(prompt);
+            aiFeedbackText = result.response.text();
+            document.getElementById('mg-rep-feedback').textContent = aiFeedbackText;
+        } catch (e) {
+            aiFeedbackText = `Khá khen! Bạn đã hoàn thành được ${unlockedCount}/5 nhiệm vụ.`;
+            document.getElementById('mg-rep-feedback').textContent = aiFeedbackText;
+        }
+    });
+
+    document.getElementById('mg-btn-submit-form').addEventListener('click', async () => {
+        const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeq5OjKKgpquqW5QjnTXkdrcJVG__TIDBYerHqHLjiELPFzIg/formResponse";
+        
+        let unlockedCount = unlockedStatus.filter(val => val === true).length;
+        
+        // Exact Field Mapping as requested
+        const formData = new URLSearchParams();
+        formData.append("entry.1467509950", studentData.name);             // Tên Đầy Đủ
+        formData.append("entry.91968307", studentData.id);                 // Mã Sinh Viên
+        formData.append("entry.943206647", studentData.class);             // Lớp
+        formData.append("entry.1879949395", activeCharacter.name);         // Tên nhân vật
+        formData.append("entry.40282115", fullTranscript);                 // Transcript
+        formData.append("entry.1286364500", intimacyScore.toString());     // Điểm thân mật
+        formData.append("entry.550002340", unlockedCount.toString());      // Số nhiệm vụ đạt được
+        formData.append("entry.2048235094", aiFeedbackText);               // Nhận xét của AI
+
+        const btn = document.getElementById('mg-btn-submit-form');
+        btn.textContent = "⏳ Hệ thống đang thu thập dữ liệu...";
+        btn.disabled = true;
+
+        try {
+            await fetch(formUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Essential for silent background submit without CORS issues
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            });
+            
+            btn.textContent = "✅ Chốt đơn thành công! (Dữ liệu đã vào Sheet)";
+            btn.style.background = "#10B981"; // Success green
+        } catch (e) {
+            btn.textContent = "❌ Lỗi kết nối. Bấm thử lại nhé!";
+            btn.disabled = false;
+        }
+    });
+
+    document.getElementById('mg-btn-play-again').addEventListener('click', () => {
+        const btn = document.getElementById('mg-btn-submit-form');
+        btn.textContent = "📤 Nộp Lên Hệ Thống Ngay!";
+        btn.style.background = "linear-gradient(135deg, var(--mg-success) 0%, #34D399 100%)";
+        btn.disabled = false;
+        
+        switchScreen('select');
+    });
+
+</script>
+</body>
+</html>
